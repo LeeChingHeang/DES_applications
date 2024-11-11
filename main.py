@@ -118,11 +118,13 @@ def swap(left, right):
     return right, left
 ## Straight Permutation D-box
 
+def encrypt(left, right, key):
+    f_function_output = f_function(right, key)
+    xor_L_fR_output = xor(left, f_function_output)
+    left_new, right_new = swap(left, xor_L_fR_output)
+    return left_new, right_new
+# decryption it just a reverse oder of the key rotation just perform the key rotation in reverse order 
 
-# Final permutation
-    
-#==================+main+==================
-# perform 16 rounds encryption
 
 def main():
     plaintext = "Ineedyou"
@@ -141,9 +143,10 @@ def main():
     IP_left, IP_right = split_key(IP_text_bin, len(IP_text_bin)//2)
     
     for i in range(1, 17):
-        f_function_output = f_function(IP_right, generate_keys[i-1])
-        xor_L_fR_output = xor(IP_left, f_function_output)
-        IP_left, IP_right = swap(IP_left, xor_L_fR_output)
+        # f_function_output = f_function(IP_right, generate_keys[i-1])
+        # xor_L_fR_output = xor(IP_left, f_function_output)
+        # IP_left, IP_right = swap(IP_left, xor_L_fR_output)
+        IP_left, IP_right = encrypt(IP_left, IP_right, generate_keys[i-1])
     
     # concatenate the left and right keys
     combined_output = list(IP_left + IP_right)
@@ -157,6 +160,7 @@ def main():
     # print("Cipher text: ", combined_output)
     # # print("Cipher text: ", bin2str(''.join(combined_output)))
     # # print("Cipher text: ", bin2str(''.join(FP_box)))
+
 
 
 if __name__ == "__main__":
