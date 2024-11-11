@@ -6,7 +6,8 @@ Key="LoveLong"
 def str2bin(text):
     binary = ''.join(format(ord(i), '08b') for i in text)
     return binary
-
+def bin2des(bin):
+    return int(bin, 2)
 # permutation function 
 def permute(arr, table):
     return [arr[i-1] for i in table]
@@ -95,16 +96,28 @@ def f_function(permuted_text_bin, generate_key_bin):
     expansion_Dbox_table = generate_random_table(1, 32, 48, 2)
     expansion_output = permute(text_bin, expansion_Dbox_table)
     print("Expansion output: ", expansion_output)
-    print("Key: ", generate_key_bin[0])
+    print("Key: ", generate_key_bin)
+    # perform XOR operation EXPANSION D-box output and the key
+    xor_output = xor(expansion_output, generate_key_bin)
     print("XOR output: ", xor_output)
-    for i in range(0,15):
-        # perform XOR operation EXPANSION D-box output and the key
-        xor_output = xor(expansion_output, generate_key_bin[i])
-        # S-box
+    # create S-boxes
+    s_box = divide_chunks(xor_output, 6)
+    chunk = len(s_box)
+    s_box_table = create_matrix(4, 16, 0, 15)
+    print("S-box table: ", s_box_table)
+
+    s_box_new = [] 
+    # 7 it the max index of chunk that s_box contain which have 8 chunk so -1 equal to number of the max index
+    for i in range(7):
         # generate s-boxes_table
-        s_box_table = create_matrix(8, 4, 0, 15)
-        s_box = divide_chunks(xor_output, 6)
-        
+        s_box_table = create_matrix(4, 16, 0, 15)
+        row = int(s_box[i][0] + s_box[i][5], 2)
+        col = int(s_box[i][1:5], 2)
+        print("Row: ", row)
+        print("Col: ", col)
+        s_box_new.append(format(s_box_table[i][row][col], '04b'))
+
+
     print("S-box: ", s_box)
     # Straight Permutation D-box
     # Final permutation
@@ -125,7 +138,7 @@ key_bin = str2bin(Key)
 PD_permute_key_output = PD_box(key_bin)
 PD_left, PD_right = split_key(PD_permute_key_output, len(PD_permute_key_output)//2)
 generate_keys = compression_Dbox(PD_permute_key_output)
-debug = f_function(PD_right, generate_keys)
+debug = f_function(PD_right, generate_keys[0])
 # print(PD_permute_key_output)
 # print("PD Left key: ",PD_left)
 # print("PD Right key: ", PD_right)
