@@ -6,8 +6,6 @@ Key="LoveLong"
 def str2bin(text):
     binary = ''.join(format(ord(i), '08b') for i in text)
     return binary
-def bin2des(bin):
-    return int(bin, 2)
 # permutation function 
 def permute(arr, table):
     return [arr[i-1] for i in table]
@@ -103,25 +101,30 @@ def f_function(permuted_text_bin, generate_key_bin):
     # create S-boxes
     s_box = divide_chunks(xor_output, 6)
     chunk = len(s_box)
-    s_box_table = create_matrix(4, 16, 0, 15)
-    print("S-box table: ", s_box_table)
 
-    s_box_new = [] 
+    s_box_32bits = []
     # 7 it the max index of chunk that s_box contain which have 8 chunk so -1 equal to number of the max index
-    for i in range(7):
-        # generate s-boxes_table
+    for j in range(8):
         s_box_table = create_matrix(4, 16, 0, 15)
-        row = int(s_box[i][0] + s_box[i][5], 2)
-        col = int(s_box[i][1:5], 2)
+        print("S-box table: ", s_box_table)
+        row = int(s_box[j][0] + s_box[j][5], 2)
+        col = int(s_box[j][1:5], 2)
         print("Row: ", row)
         print("Col: ", col)
-        s_box_new.append(format(s_box_table[i][row][col], '04b'))
+        
+        bin_sbox_value = bin(s_box_table[row][col])[2:].zfill(4)
+        # s_box_32bits += bin(s_box_table[row][col])[2:].zfill(4) 
+        s_box_32bits.extend(list(bin_sbox_value))
 
+    
 
     print("S-box: ", s_box)
+    print("S-box table: ", s_box_table)
+    print("S-box 32bits: ", s_box_32bits)
+    print("S-box 32bits: ", len(s_box_32bits))
     # Straight Permutation D-box
     # Final permutation
-    return expansion_output
+    return s_box_32bits
 ## Expansion D-box
 ## S-box
 ## Straight Permutation D-box
