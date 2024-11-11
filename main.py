@@ -1,11 +1,11 @@
 import random
-plaintext = "Ineedyou"
-Key="LoveLong"
 
 # convert plaintext and key to binary string
 def str2bin(text):
     binary = ''.join(format(ord(i), '08b') for i in text)
     return binary
+def bin2str(binary):
+    return ''.join(chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8))
 # permutation function 
 def permute(arr, table):
     return [arr[i-1] for i in table]
@@ -17,7 +17,7 @@ def generate_unique_random_array(size, start, end):
 # find the output of the Parity drop table
 def PD_box(key_bin):
     # we input the key of 64-bits but we use only 56-bits so we need to generate a random array of 56 unique numbers from 1 to 64 for table for Permutation
-    PD_table = generate_unique_random_array(56, 1, 64)
+    PD_table = generate_unique_random_array(56, 1, 65)
     # Key permutation 64-bit to 56-bit
     PD_permute_key = permute(key_bin, PD_table)
     return PD_permute_key
@@ -42,7 +42,7 @@ def compression_Dbox(key_bin):
     generate_keys = []
     # generate compressed-Dbox table from 1-56 key to 48-bit key length
     # we need to use the same compressed_Dbox_table for all rounds of the key generation
-    compressed_Dbox_table = generate_unique_random_array(48, 1, 56)
+    compressed_Dbox_table = generate_unique_random_array(48, 1, 57)
     # we need to split the 56-bit key into two 28-bit keys
     left, right = split_key(key_bin, 28)
     # shift our bit to the left
@@ -71,8 +71,8 @@ def generate_random_table(start, end, size, max_occurrences):
     return random_numbers
 # Initial permutation
 def ip_box(text_bin):
-    ip_table = generate_unique_random_array(64, 1, 64)
-    ip_permute_text = permute(text_bin(ip_table))
+    ip_table = generate_unique_random_array(64, 1, 65)
+    ip_permute_text = permute(text_bin,ip_table)
     return ip_permute_text
 
 # Create matrix
@@ -89,15 +89,12 @@ def divide_chunks(input_string, chunk_size):
     return [input_string[i:i+chunk_size] for i in range(0, len(input_string), chunk_size)]
 
 # F-function 
-def f_function(permuted_text_bin, generate_key_bin):
+def f_function(plaintext_bin_arr_right, generate_key_bin):
     # Expansion D-box
-    expansion_Dbox_table = generate_random_table(1, 32, 48, 2)
-    expansion_output = permute(text_bin, expansion_Dbox_table)
-    print("Expansion output: ", expansion_output)
-    print("Key: ", generate_key_bin)
+    expansion_Dbox_table = generate_random_table(1, 33, 48, 2)
+    expansion_output = permute(plaintext_bin_arr_right, expansion_Dbox_table)
     # perform XOR operation EXPANSION D-box output and the key
     xor_output = xor(expansion_output, generate_key_bin)
-    print("XOR output: ", xor_output)
     # create S-boxes
     s_box = divide_chunks(xor_output, 6)
     chunk = len(s_box)
@@ -106,42 +103,72 @@ def f_function(permuted_text_bin, generate_key_bin):
     # 7 it the max index of chunk that s_box contain which have 8 chunk so -1 equal to number of the max index
     for j in range(8):
         s_box_table = create_matrix(4, 16, 0, 15)
-        print("S-box table: ", s_box_table)
         row = int(s_box[j][0] + s_box[j][5], 2)
         col = int(s_box[j][1:5], 2)
-        print("Row: ", row)
-        print("Col: ", col)
         
         bin_sbox_value = bin(s_box_table[row][col])[2:].zfill(4)
         # s_box_32bits += bin(s_box_table[row][col])[2:].zfill(4) 
         s_box_32bits.extend(list(bin_sbox_value))
 
-    
-
-    print("S-box: ", s_box)
-    print("S-box table: ", s_box_table)
-    print("S-box 32bits: ", s_box_32bits)
-    print("S-box 32bits: ", len(s_box_32bits))
     # Straight Permutation D-box
     # Final permutation
     return s_box_32bits
-## Expansion D-box
-## S-box
+# swap function
+def swap(left, right):
+    return right, left
 ## Straight Permutation D-box
+
+
 # Final permutation
     
+#==================+main+==================
+# perform 16 rounds encryption
+
+def main():
+    plaintext = "Ineedyou"
+    Key="LoveLong"
+    # convert plaintext and key to binary string
+    key_bin = str2bin(Key)
+    plaintext_bin = str2bin(plaintext)
+    # Initial permutation
+    IP_text_bin = ip_box(plaintext_bin)
+
+    # Parity drop box
+    PD_permute_key_output = PD_box(key_bin)    
+    # generate keys
+    generate_keys = compression_Dbox(PD_permute_key_output)
+    # split the IP_permutation into two halves
+    IP_left, IP_right = split_key(IP_text_bin, len(IP_text_bin)//2)
+    
+    for i in range(1, 17):
+        f_function_output = f_function(IP_right, generate_keys[i-1])
+        xor_L_fR_output = xor(IP_left, f_function_output)
+        IP_left, IP_right = swap(IP_left, xor_L_fR_output)
+    
+    # concatenate the left and right keys
+    combined_output = list(IP_left + IP_right)
+    FP_box_table = generate_unique_random_array(64, 1, 65)
+    FP_permute_output = permute(combined_output, FP_box_table)
+    print("Cipher text array: ", FP_permute_output)
+    print("Cipher text String: ", ''.join(FP_permute_output))
+    print("Cipher text: ", bin2str(''.join(FP_permute_output)))
+    # FP_box = permute(combined_output, FP_box_table)
+    # # Final permutation
+    # print("Cipher text: ", combined_output)
+    # # print("Cipher text: ", bin2str(''.join(combined_output)))
+    # # print("Cipher text: ", bin2str(''.join(FP_box)))
 
 
-
-
+if __name__ == "__main__":
+    main()
 #===========+debugging+==================
-text_bin = str2bin(plaintext)
-key_bin = str2bin(Key)
+# text_bin = str2bin(plaintext)
+# key_bin = str2bin(Key)
 
-PD_permute_key_output = PD_box(key_bin)
-PD_left, PD_right = split_key(PD_permute_key_output, len(PD_permute_key_output)//2)
-generate_keys = compression_Dbox(PD_permute_key_output)
-debug = f_function(PD_right, generate_keys[0])
+# PD_permute_key_output = PD_box(key_bin)
+# PD_left, PD_right = split_key(PD_permute_key_output, len(PD_permute_key_output)//2)
+# generate_keys = compression_Dbox(PD_permute_key_output)
+# debug = f_function(PD_right, generate_keys[0])
 # print(PD_permute_key_output)
 # print("PD Left key: ",PD_left)
 # print("PD Right key: ", PD_right)
