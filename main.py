@@ -4,6 +4,7 @@ import random
 def str2bin(text):
     binary = ''.join(format(ord(i), '08b') for i in text)
     return binary
+# convert binary string to string
 def bin2str(binary):
     return ''.join(chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8))
 # permutation function 
@@ -147,6 +148,7 @@ def main():
         # xor_L_fR_output = xor(IP_left, f_function_output)
         # IP_left, IP_right = swap(IP_left, xor_L_fR_output)
         IP_left, IP_right = encrypt(IP_left, IP_right, generate_keys[i-1])
+
     
     # concatenate the left and right keys
     combined_output = list(IP_left + IP_right)
